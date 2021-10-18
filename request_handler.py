@@ -1,5 +1,6 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from animals import get_all_animals, get_tacos, get_single_animal
+import json
+from animals import get_all_animals, get_tacos, get_single_animal, create_animal, update_animal, delete_animal
 
 
 class HandleRequests(BaseHTTPRequestHandler):
@@ -50,11 +51,40 @@ class HandleRequests(BaseHTTPRequestHandler):
         self._set_headers(201)
         content_len = int(self.headers.get('content-length', 0))
         post_body = self.rfile.read(content_len)
-        response = f"received post request: {post_body}"
-        self.wfile.write(response.encode())
+        post_body = json.loads(post_body)
+
+        (resource, taco) = self.parse_url(self.path)
+
+        new_response = None
+
+        if resource == "animals":
+            new_response = create_animal(post_body)
+
+
+
+        self.wfile.write(f'{new_response}'.encode())
 
     def do_PUT(self):
-        self.do_POST()
+        self._set_headers(204)
+        content_len = int(self.headers.get('content-length', 0))
+        post_body = self.rfile.read(content_len)
+        post_body = json.loads(post_body)
+
+        (resource, id) = self.parse_url(self.path)
+
+        if resource == "animals":
+            update_animal(id, post_body)
+
+        self.wfile.write("".encode())
+
+    def do_DELETE(self):
+        self._set_headers(204)
+        (resource, id) = self.parse_url(self.path)
+
+        if resource == "animals":
+            delete_animal(id)
+
+        self.wfile.write("".encode())
 
 
 def main():
