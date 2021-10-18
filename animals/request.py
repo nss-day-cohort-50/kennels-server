@@ -1,3 +1,7 @@
+import json
+import sqlite3
+from models import Animal
+
 ANIMALS = [
     {
         "id": 1,
@@ -11,17 +15,42 @@ ANIMALS = [
 # const animals = []
 
 def get_all_animals():
-    return ANIMALS
+    with sqlite3.connect("./kennel.db") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+        select a.id,
+            a.name,
+            a.breed,
+            a.status,
+            a.location_id,
+            a.customer_id
+        from animal as a
+        """)
+
+        dataset = db_cursor.fetchall()
+        animals = []
+
+        for row in dataset:
+            animal = Animal(row['id'], row['name'], row['breed'], row['status'], row['location_id'])
+            animals.append(animal.__dict__)
+    return json.dumps(animals)
 
 def get_single_animal(id):
-    # let requestedAnimal;
-    requested_animal = None
+    with sqlite3.connect('./kennel.db') as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+        db_cursor.execute("""
+        select *
+        from animal
+        where id = ?
+        """, (id, ))
 
-    for animal in ANIMALS:
-        if animal['id'] == id:
-            requested_animal = animal
+        data = db_cursor.fetchone()
 
-    return requested_animal
+        animal = Animal(data['id'], data['name'], data['status'], data['location_id'])
+        return json.dumps(animal.__dict__)
 
 def create_animal(animal):
     max_id = ANIMALS[-1]["id"]
