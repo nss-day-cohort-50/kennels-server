@@ -1,5 +1,6 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+from customers import get_customers_by_email
 from animals import get_all_animals, get_tacos, get_single_animal, create_animal, update_animal, delete_animal
 
 
@@ -14,15 +15,25 @@ class HandleRequests(BaseHTTPRequestHandler):
     def parse_url(self, path):
         path_params = path.split('/')
         resource = path_params[1]
-        id = None
+        
+        if '?' in resource:
+            param = resource.split('?')[1]
+            resource = resource.split('?')[0]
+            pair = param.split('=')
+            key = pair[0]
+            value = pair[1]
 
-        try:
-            id = int(path_params[2])
-        except IndexError:
-            print("they didn't pass in a int")
-        except ValueError:
-            pass
-        return (resource, id)
+            return (resource, key, value)
+        else:
+            id = None
+
+            try:
+                id = int(path_params[2])
+            except IndexError:
+                print("they didn't pass in a int")
+            except ValueError:
+                pass
+            return (resource, id)
 
     def do_OPTIONS(self):
         self.send_response(200)
@@ -38,12 +49,20 @@ class HandleRequests(BaseHTTPRequestHandler):
         # let response;
         response = {}
         # const [posts, setPosts] = useState([])
-        (resource, id) = self.parse_url(self.path)
-        if resource == "animals":
-            if id is not None:
-                response = f'{get_single_animal(id)}'
-            else:
-                response = f'{get_all_animals()}'
+        parsed = self.parse_url(self.path)
+
+        if len(parsed) == 2:
+            (resource, id) = parsed
+            if resource == "animals":
+                if id is not None:
+                    response = f'{get_single_animal(id)}'
+                else:
+                    response = f'{get_all_animals()}'
+        elif len(parsed) == 3:
+            (resource, key, value) = parsed
+
+            if key == "email" and resource == "customers":
+                response = get_customers_by_email(value)
 
         self.wfile.write(response.encode())
 

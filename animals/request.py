@@ -61,15 +61,15 @@ def create_animal(animal):
     return animal
 
 def delete_animal(id):
-    animal_index = -1
-    taco = 'id'
-    for (index, animal) in enumerate(ANIMALS):
-        if animal[taco] == id:
-            animal_to_remove = animal
-    
-    if animal_index >= 0:
-        ANIMALS.remove(animal_to_remove)
-
+    with sqlite3.connect('./kennel.db') as conn:
+        db_cursor = conn.cursor()
+        db_cursor.execute("""
+            DELETE FROM animal
+            where id = ?
+        """, (id, ))
+    # conn = sqlite3.connect('./kennel.db')
+    # # execute sql
+    # conn.close()
 def update_animal(id, updated_animal):
     for index, animal in enumerate(ANIMALS):
         if animal['id'] == id:
