@@ -70,8 +70,14 @@ def delete_animal(id):
     # conn = sqlite3.connect('./kennel.db')
     # # execute sql
     # conn.close()
+
 def update_animal(id, updated_animal):
     for index, animal in enumerate(ANIMALS):
         if animal['id'] == id:
             ANIMALS[index] = updated_animal
             break
+
+def get_animals_by_search(text):
+    animals = json.loads(get_all_animals())
+    animals = [animal for animal in animals if text.lower() in animal['name'].lower()]
+    return json.dumps(animals)

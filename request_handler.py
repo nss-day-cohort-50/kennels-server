@@ -1,8 +1,10 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
-from customers import get_customers_by_email
-from animals import get_all_animals, get_tacos, get_single_animal, create_animal, update_animal, delete_animal
-
+from animals import get_all_animals, get_single_animal, create_animal, delete_animal, update_animal
+from locations import get_all_locations
+from employees import get_all_employees, get_single_employee
+from customers import (get_all_customers, get_single_customer,
+                       get_customers_by_email, get_customers_by_name)
 
 class HandleRequests(BaseHTTPRequestHandler):
     def _set_headers(self, status):
@@ -52,18 +54,36 @@ class HandleRequests(BaseHTTPRequestHandler):
         parsed = self.parse_url(self.path)
 
         if len(parsed) == 2:
-            (resource, id) = parsed
+
+            (resource, id) = parsed  # pylint: disable=unbalanced-tuple-unpacking
             if resource == "animals":
                 if id is not None:
-                    response = f'{get_single_animal(id)}'
+                    response = f"{get_single_animal(id)}"
                 else:
-                    response = f'{get_all_animals()}'
+                    response = f"{get_all_animals()}"
+            elif resource == "locations":
+                if id is not None:
+                    response = f"{get_single_animal(id)}"
+                else:
+                    response = f"{get_all_locations()}"
+            elif resource == "customers":
+                if id is not None:
+                    response = f"{get_single_customer(id)}"
+                else:
+                    response = f"{get_all_customers()}"
+            elif resource == "employees":
+                if id is not None:
+                    response = f"{get_single_employee(id)}"
+                else:
+                    response = f"{get_all_employees()}"
         elif len(parsed) == 3:
             (resource, key, value) = parsed
-
             if key == "email" and resource == "customers":
                 response = get_customers_by_email(value)
-
+            elif key == "name" and resource == "customers":
+                response = get_customers_by_name(value)
+            elif key == "search" and resource == 'animals':
+                response = get_animals_by_search(value)
         self.wfile.write(response.encode())
 
     def do_POST(self):
