@@ -5,6 +5,7 @@ class Animal():
         self.breed = breed
         self.status = status
         self.location_id = location_id
+        self.location = None
 
 
 animal1 = Animal(1, 'Jack', 'husky', 'napping')

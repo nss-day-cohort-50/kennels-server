@@ -1,6 +1,7 @@
 import json
 import sqlite3
 from models import Animal
+from models.location import Location
 
 ANIMALS = [
     {
@@ -42,24 +43,48 @@ def get_single_animal(id):
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
         db_cursor.execute("""
-        select *
-        from animal
-        where id = ?
+        select
+            a.id,
+            a.name,
+            a.breed,
+            a.status,
+            a.location_id,
+            a.customer_id,
+            l.name location_name,
+            l.address,
+            c.name customer_name
+        from animal a
+        join location l on l.id = a.location_id
+        join customer c on c.id = a.customer_id
+        where a.id = ?
         """, (id, ))
 
         data = db_cursor.fetchone()
 
         animal = Animal(data['id'], data['name'], data['breed'], data['status'], data['location_id'])
+        location = Location(data['location_id'], data['location_name'], data['address'])
+        animal.customer_name = data['customer_name']
+        # animal.customer = {
+        #     'name': data['customer_name']
+        # }
+        animal.location = location.__dict__
         return json.dumps(animal.__dict__)
 
 def create_animal(animal):
-    max_id = ANIMALS[-1]["id"]
-    new_id = max_id + 1
-    animal['id'] = new_id
-    ANIMALS.append(animal)
+    with sqlite3.connect('./kennel.db') as conn:
+        db_cursor = conn.cursor()
 
-    return animal
+        db_cursor.execute("""
+        Insert into Animal
+        (name, breed, status, location_id, customer_id)
+        values (?, ?, ?, ?, ?)
+        """, (animal['name'], animal['breed'], animal['status'], animal['location_id'], animal['customer_id']))
 
+        animal_id = db_cursor.lastrowid
+
+        animal['id'] = animal_id
+
+    return json.dumps(animal)
 def delete_animal(id):
     with sqlite3.connect('./kennel.db') as conn:
         db_cursor = conn.cursor()
