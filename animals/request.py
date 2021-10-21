@@ -49,7 +49,7 @@ def get_single_animal(id):
 
         data = db_cursor.fetchone()
 
-        animal = Animal(data['id'], data['name'], data['status'], data['location_id'])
+        animal = Animal(data['id'], data['name'], data['breed'], data['status'], data['location_id'])
         return json.dumps(animal.__dict__)
 
 def create_animal(animal):
@@ -72,10 +72,33 @@ def delete_animal(id):
     # conn.close()
 
 def update_animal(id, updated_animal):
-    for index, animal in enumerate(ANIMALS):
-        if animal['id'] == id:
-            ANIMALS[index] = updated_animal
-            break
+    with sqlite3.connect('./kennel.db') as conn:
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+            Update Animal
+            Set
+                name = ?,
+                breed = ?,
+                location_id = ?,
+                status = ?,
+                customer_id = ?
+            where id = ?
+        """, (
+            updated_animal['name'],
+            updated_animal['breed'],
+            updated_animal['location_id'],
+            updated_animal['status'],
+            updated_animal['customer_id'],
+            id
+        ))
+
+        was_updated = db_cursor.rowcount
+
+        if was_updated:
+            return True
+        else:
+            return False
 
 def get_animals_by_search(text):
     animals = json.loads(get_all_animals())

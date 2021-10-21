@@ -1,10 +1,11 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
-from animals import get_all_animals, get_single_animal, create_animal, delete_animal, update_animal
+from animals import get_all_animals, get_single_animal, create_animal, delete_animal, update_animal, get_animals_by_search
 from locations import get_all_locations
 from employees import get_all_employees, get_single_employee
 from customers import (get_all_customers, get_single_customer,
                        get_customers_by_email, get_customers_by_name)
+
 
 class HandleRequests(BaseHTTPRequestHandler):
     def _set_headers(self, status):
@@ -12,12 +13,11 @@ class HandleRequests(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
-        
 
     def parse_url(self, path):
         path_params = path.split('/')
         resource = path_params[1]
-        
+
         if '?' in resource:
             param = resource.split('?')[1]
             resource = resource.split('?')[0]
@@ -99,12 +99,9 @@ class HandleRequests(BaseHTTPRequestHandler):
         if resource == "animals":
             new_response = create_animal(post_body)
 
-
-
         self.wfile.write(f'{new_response}'.encode())
 
     def do_PUT(self):
-        self._set_headers(204)
         content_len = int(self.headers.get('content-length', 0))
         post_body = self.rfile.read(content_len)
         post_body = json.loads(post_body)
@@ -112,7 +109,14 @@ class HandleRequests(BaseHTTPRequestHandler):
         (resource, id) = self.parse_url(self.path)
 
         if resource == "animals":
-            update_animal(id, post_body)
+            was_updated = update_animal(id, post_body)
+        elif resource == "employees":
+            pass
+
+        if was_updated:
+            self._set_headers(204)
+        else:
+            self._set_headers(404)
 
         self.wfile.write("".encode())
 
